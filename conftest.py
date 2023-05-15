@@ -57,9 +57,3 @@ def market_data_models(raw_market_data):
         model = MarketDataCreateFactory(**model_data)
         models.append(model)
     yield models
-
-    # Clean up
-    from pricer_app.market_data.models import MarketData
-
-    for model in models:
-        MarketData.delete(model.id)
