@@ -1,7 +1,7 @@
 import os
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from .models import MarketData
 from .schemas import MarketDataCreate
 from ..database import get_session
@@ -14,6 +14,14 @@ async def upload_market_data(option: MarketDataCreate, session: Session = Depend
     MarketDataCreate.validate(option.dict())
     MarketData.validate(option.dict())
     market_data = MarketData(market_data=option.market_data, contract=option.contract, exchange_code=option.exchange_code)
+
+    # First, remove existing data:
+    delete_query = delete(MarketData).where(
+        (MarketData.exchange_code == market_data.exchange_code) &
+        (MarketData.contract == market_data.contract)
+    )
+    session.exec(delete_query)
+
     session.add(market_data)
     session.commit()
     session.refresh(market_data)

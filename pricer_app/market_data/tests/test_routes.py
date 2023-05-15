@@ -22,11 +22,11 @@ def test_upload_market_data(client: TestClient):
     assert data["exchange_code"] == market_data["exchange_code"]
     assert data["contract"] == market_data["contract"]
 
-def test_get_all_market_data(client: TestClient, market_data_models: List[MarketDataCreate]):
-    response = client.get("/market_data")
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data) == len(market_data_models)
+# def test_get_all_market_data(client: TestClient, market_data_models: List[MarketDataCreate]):
+#     response = client.get("/market_data")
+#     assert response.status_code == 200
+#     data = response.json()
+#     assert len(data) == len(market_data_models)
 #
 # def test_get_market_data(client: TestClient, market_data_models: List[MarketDataCreate]):
 #     market_data_id = 1

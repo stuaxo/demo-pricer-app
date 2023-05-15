@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from pydantic import ValidationError
 
@@ -77,8 +79,7 @@ def test_valid_market_data(market_data):
         pricing_model="Black76",
         market_data=market_data,
     )
-    assert market_data_create.market_data == market_data
-
+    assert json.dumps(market_data) == market_data_create.market_data
 
 @pytest.mark.parametrize(
     "market_data, expected_message",

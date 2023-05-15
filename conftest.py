@@ -42,7 +42,7 @@ def raw_market_data():
     return valid_market_data
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def market_data_models(raw_market_data):
     """
     Returns a list of MarketDataCreate models containing data from raw_market_data.
@@ -54,8 +54,12 @@ def market_data_models(raw_market_data):
             'contract': contract,
             'market_data': market_data
         }
-        import ipdb
-        with ipdb.launch_ipdb_on_exception():
-            model = MarketDataCreateFactory(**model_data)
+        model = MarketDataCreateFactory(**model_data)
         models.append(model)
-    return models
+    yield models
+
+    # Clean up
+    from pricer_app.market_data.models import MarketData
+
+    for model in models:
+        MarketData.delete(model.id)
