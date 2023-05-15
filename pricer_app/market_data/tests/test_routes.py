@@ -1,3 +1,4 @@
+import json
 from typing import List
 from fastapi.testclient import TestClient
 from pricer_app.market_data.schemas import MarketDataCreate, MarketDataRetrieve
@@ -22,20 +23,22 @@ def test_upload_market_data(client: TestClient):
     assert data["exchange_code"] == market_data["exchange_code"]
     assert data["contract"] == market_data["contract"]
 
-# def test_get_all_market_data(client: TestClient, market_data_models: List[MarketDataCreate]):
-#     response = client.get("/market_data")
-#     assert response.status_code == 200
-#     data = response.json()
-#     assert len(data) == len(market_data_models)
-#
-# def test_get_market_data(client: TestClient, market_data_models: List[MarketDataCreate]):
-#     market_data_id = 1
-#     response = client.get(f"/market_data/{market_data_id}")
-#     assert response.status_code == 200
-#     data = response.json()
-#     assert data["id"] == market_data_id
-#     assert isinstance(data["contract"], dict)
-#     assert isinstance(data["market_data"], dict)
+def test_get_all_market_data(client: TestClient, market_data_models: List[MarketDataCreate], raw_market_data):
+    response = client.get("/market_data")
+    assert response.status_code == 200
+    data = response.content
+    # TODO
+    print(data)
+
+def test_get_market_data(client: TestClient, market_data_models: List[MarketDataCreate]):
+    market_data_id = 1
+    response = client.get(f"/market_data/{market_data_id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == market_data_id
+    assert isinstance(data["contract"], str)  # contract notation
+    assert isinstance(data["market_data"], str)  # serialized JSON
+    json.loads(data["market_data"])  # check that it is valid JSON
 #
 # def test_get_market_data_not_found(client: TestClient):
 #     market_data_id = 999

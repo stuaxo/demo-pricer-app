@@ -30,7 +30,7 @@ async def upload_market_data(option: MarketDataCreate, session: Session = Depend
 
 @router.get("/market_data")
 async def get_all_market_data(session: Session = Depends(get_session)):
-    market_data = session.exec(select(MarketData)).all()
+    market_data = [*session.exec(select(MarketData)).all()]
     return market_data
 
 

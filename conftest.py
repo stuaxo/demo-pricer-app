@@ -56,4 +56,4 @@ def market_data_models(raw_market_data):
         }
         model = MarketDataCreateFactory(**model_data)
         models.append(model)
-    yield models
+    return models
