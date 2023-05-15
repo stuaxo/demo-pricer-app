@@ -1,8 +1,9 @@
 import pytest
 from pydantic import ValidationError
 
-from .factories import MarketDataCreateFactory
+from .factories import MarketDataCreateFactory, ContractFactory
 from ..schemas import Contract
+from .helpers import assert_valid_contract
 
 
 @pytest.mark.parametrize(
@@ -12,7 +13,9 @@ from ..schemas import Contract
     ],
 )
 def test_valid_contract(exchange_code, contract_string):
-    Contract.from_contract_notation(exchange_code, contract_string)
+    contract = ContractFactory()
+
+    assert_valid_contract(contract)
 
 
 @pytest.mark.parametrize(

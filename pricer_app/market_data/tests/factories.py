@@ -10,8 +10,9 @@ class ContractFactory(factory.Factory):
         model = Contract
 
     # get_valid_exchange_code_for_commodity ensures valid combinations of exchange_code and asset
+    exchange_code = factory.SelfAttribute('original_contract.exchange_code')
     exchange_code = factory.LazyAttribute(
-        lambda o: get_valid_exchange_code_for_commodity(o.asset)
+       lambda o: get_valid_exchange_code_for_commodity(o.asset)
     )
     asset = factory.Faker("random_element", elements=["BRN", "HH"])
 
@@ -38,9 +39,6 @@ class ContractNotationFactory(factory.Factory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         contract = ContractFactory()
-        # A little hacky, but we stuff the exchange_code into the contract string
-        # so that we can use it in the MarketDataCreateFactory
-        contract = contract._exchange_code = contract.exchange_code
         return contract.to_notation_data()
 
 
@@ -54,9 +52,7 @@ class MarketDataCreateFactory(factory.Factory):
         original_contract = factory.SubFactory(ContractFactory)
 
     # Once contract is created, we can use it to get the exchange_code
-    exchange_code = factory.LazyAttribute(
-        lambda o: o.original_contract.exchange_code  # noqa:
-    )
+    exchange_code = factory.SelfAttribute('original_contract.exchange_code')
 
     # contract is stored in contract notation format, e.g. "BRN Jun21 Call Strike 50.0 USD"
     contract = factory.LazyAttribute(

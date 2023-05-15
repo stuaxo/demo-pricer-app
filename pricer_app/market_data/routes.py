@@ -1,34 +1,34 @@
-from fastapi import APIRouter
-from tortoise.contrib.fastapi import HTTPNotFoundError
+import os
 
-from .models import MarketData, MarketData_Pydantic
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session, select
+from .models import MarketData
 from .schemas import MarketDataCreate
+from ..database import get_session
 
 router = APIRouter()
 
 
-@router.post("/market_data", response_model=MarketData_Pydantic)
-async def upload_market_data(option: MarketDataCreate) -> MarketData_Pydantic:
-    option_dict = option.dict()
-    obj = await MarketData.create(**option_dict)
-    return MarketData_Pydantic.from_orm(obj)
-
-# @router.post("/market_data", response_model=MarketData_Pydantic)
-# async def upload_market_data(option: MarketDataCreate) -> MarketData_Pydantic:
-#     obj = await MarketData.create(**option.dict())
-#     return MarketData_Pydantic.from_orm(obj)
-
-
-@router.get("/market_data", response_model=list[MarketData_Pydantic])
-async def get_all_market_data() -> list[MarketData_Pydantic]:
-    data = await MarketData_Pydantic.from_queryset(MarketData.all())
-    return data
+@router.post("/market_data")
+async def upload_market_data(option: MarketDataCreate, session: Session = Depends(get_session)):
+    MarketDataCreate.validate(option.dict())
+    MarketData.validate(option.dict())
+    market_data = MarketData(market_data=option.market_data, contract=option.contract, exchange_code=option.exchange_code)
+    session.add(market_data)
+    session.commit()
+    session.refresh(market_data)
+    return market_data
 
 
-@router.get(
-    "/market_data/{option_id}",
-    response_model=MarketData_Pydantic,
-    responses={404: {"model": HTTPNotFoundError}},
-)
-async def get_market_data(option_id: int) -> MarketData_Pydantic:
-    return await MarketData_Pydantic.from_queryset_single(MarketData.get(id=option_id))
+@router.get("/market_data")
+async def get_all_market_data(session: Session = Depends(get_session)):
+    market_data = session.exec(select(MarketData)).all()
+    return market_data
+
+
+@router.get("/market_data/{option_id}")
+async def get_market_data(option_id: int, session: Session = Depends(get_session)):
+    market_data = session.get(MarketData, option_id)
+    if not market_data:
+        raise HTTPException(status_code=404, detail="Option not found")
+    return market_data
