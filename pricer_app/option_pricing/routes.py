@@ -19,7 +19,9 @@ async def calculate_option_pv(option_id: int, option_data: OptionPricingData) ->
     Raises a 404 error if the option market data object does not exist.
     Raises a 400 error if the option pricing data is invalid (see `pricer_app.pricing.black76`).
     """
-    option_market_data = Session.exec(select(MarketData).where(MarketData.id == option_id)).first()
+    option_market_data = Session.exec(
+        select(MarketData).where(MarketData.id == option_id)
+    ).first()
 
     if option_market_data is None:
         raise HTTPException(status_code=404, detail="Option market data not found.")

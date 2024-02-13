@@ -10,15 +10,21 @@ router = APIRouter()
 
 
 @router.post("/market_data")
-async def upload_market_data(option: MarketDataCreate, session: Session = Depends(get_session)):
-    MarketDataCreate.validate(option.dict())
+async def upload_market_data(
+    option: MarketDataCreate, session: Session = Depends(get_session)
+):
+    MarketDataCreate.model_validate(option.dict())
     MarketData.validate(option.dict())
-    market_data = MarketData(market_data=option.market_data, contract=option.contract, exchange_code=option.exchange_code)
+    market_data = MarketData(
+        market_data=option.market_data,
+        contract=option.contract,
+        exchange_code=option.exchange_code,
+    )
 
     # First, remove existing data:
     delete_query = delete(MarketData).where(
-        (MarketData.exchange_code == market_data.exchange_code) &
-        (MarketData.contract == market_data.contract)
+        (MarketData.exchange_code == market_data.exchange_code)
+        & (MarketData.contract == market_data.contract)
     )
     session.exec(delete_query)
 

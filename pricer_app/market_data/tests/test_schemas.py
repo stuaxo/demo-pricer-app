@@ -21,11 +21,24 @@ def test_valid_contract(exchange_code, contract_string):
 
 
 @pytest.mark.parametrize(
-    "exchange_code,contract_notation,expected_error_message", [
-        ("INVALID", "BRN Jan21 Call Strike 50 USD/BBL", "No exchange found with exchange_code: INVALID"),
-        ("NYMEX", "INVALID CONTRACT STRING", "Invalid contract notation: INVALID CONTRACT STRING"),
-        ("NYMEX", "BRN Jan21 Call Strike 50", "Invalid contract notation: BRN Jan21 Call Strike 50"),
-    ]
+    "exchange_code,contract_notation,expected_error_message",
+    [
+        (
+            "INVALID",
+            "BRN Jan21 Call Strike 50 USD/BBL",
+            "No exchange found with exchange_code: INVALID",
+        ),
+        (
+            "NYMEX",
+            "INVALID CONTRACT STRING",
+            "Invalid contract notation: INVALID CONTRACT STRING",
+        ),
+        (
+            "NYMEX",
+            "BRN Jan21 Call Strike 50",
+            "Invalid contract notation: BRN Jan21 Call Strike 50",
+        ),
+    ],
 )
 def test_invalid_contract(exchange_code, contract_notation, expected_error_message):
     with pytest.raises(ValueError) as ex_info:
@@ -80,6 +93,7 @@ def test_valid_market_data(market_data):
         market_data=market_data,
     )
     assert json.dumps(market_data) == market_data_create.market_data
+
 
 @pytest.mark.parametrize(
     "market_data, expected_message",

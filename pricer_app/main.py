@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from pricer_app.database import create_db_and_tables
+
 ## from sqlmodel import SQLModel, create_engine
 from pricer_app.market_data.routes import router as market_data_router
-from pricer_app.market_data.models import MarketData  # noqa - this is used in the create_db_and_tables function
+from pricer_app.market_data.models import (
+    MarketData,
+)  # noqa - this is used in the create_db_and_tables function
 from dotenv import load_dotenv
 import os
 

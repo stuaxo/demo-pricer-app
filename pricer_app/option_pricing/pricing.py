@@ -33,7 +33,7 @@ def black76(
     if T < 0:
         raise ValueError("Time to maturity (T) must be non-negative.")
 
-    d1 = (log(F / K) + 0.5 * sigma ** 2 * T) / (sigma * sqrt(T))
+    d1 = (log(F / K) + 0.5 * sigma**2 * T) / (sigma * sqrt(T))
     d2 = d1 - sigma * sqrt(T)
 
     if option_type == OptionType.call:

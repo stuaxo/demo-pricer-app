@@ -1,6 +1,6 @@
 import json
 from typing import Dict, Union, Optional, Any
-from pydantic import BaseModel, validator, root_validator
+from pydantic import BaseModel, model_validator, field_validator
 
 from .business_rules import ContractNotationParser
 from .validators import validate_exchange_code
@@ -47,6 +47,7 @@ class MarketDataCreate(BaseModel):
     """
     MarketDataCreate is the input data for creating a MarketData object in the database.
     """
+
     exchange_code: str
 
     # contract is stored in contract notation format, e.g. "BRN Jun21 Call Strike 50.0 USD"
@@ -54,20 +55,20 @@ class MarketDataCreate(BaseModel):
     pricing_model: str
     market_data: str
 
-    @validator("exchange_code")
+    @field_validator("exchange_code")
     def validate_exchange_code(cls, exchange_code):  # noqa:
         validate_exchange_code(exchange_code)
         return exchange_code
 
-    @validator("contract")
-    def validate_contract(cls, contract, values, **kwargs): # noqa:
+    @field_validator("contract")
+    def validate_contract(cls, contract, values, **kwargs):  # noqa:
         """
         Validate the contract notation string and exchange code.
         """
         ContractNotationParser.validate(contract)
         return contract
 
-    @validator("pricing_model")
+    @field_validator("pricing_model")
     def only_allow_supported_pricing_models(cls, pricing_model):  # noqa:
         supported_models = ["Black76"]
         if pricing_model not in supported_models:
@@ -76,28 +77,15 @@ class MarketDataCreate(BaseModel):
             )
         return pricing_model
 
-    @validator("market_data")
-    def validate_market_data(cls, market_data, values):  # noqa:
-        """
-        Validate the market_data dictionary based on the specified pricing model.
+    @model_validator(mode="after")
+    def validate_market_data(cls, values):  # noqa:
+        market_data = values.market_data
+        pricing_model = values.pricing_model
 
-        For the Black76 model, the required input parameters are:
-        - forward_price (F): The current price of the underlying futures contract.
-        - strike_price (K): The price at which the option can be exercised.
-        - time_to_expiration (T): The time left until the option expires, expressed as a fraction of a year.
-        - volatility (σ): A measure of the price fluctuations of the underlying futures contract, expressed as an annualized percentage.
-        - risk_free_interest_rate (r): The risk-free interest rate, usually represented by the yield on government bonds for the same period as the option's time to expiration.
-
-        The field names in the market_data dictionary correspond to these conventional input parameters.
-
-        :param market_data: Dictionary containing market data for the specified pricing model.
-        :param values: Dictionary of previously validated fields.
-        :return: The validated market_data dictionary.
-        """
         # Convert market_data to a dictionary if it is a JSON string
         if isinstance(market_data, str):
             market_data = json.loads(market_data)
-        pricing_model = values.get("pricing_model")
+
         if pricing_model == "Black76":
             required_fields = {
                 "forward_price",
@@ -111,10 +99,12 @@ class MarketDataCreate(BaseModel):
                 raise ValueError(
                     f"Missing required fields for {pricing_model} model: {', '.join(missing_fields)}"
                 )
-        # Return market data jsonified
-        return json.dumps(market_data)
 
-    @root_validator(pre=True)
+        # Modify values directly if needed
+        values.market_data = json.dumps(market_data)
+        return values
+
+    @model_validator(mode="before")
     def convert_market_data_to_json(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """
         Convert the market_data dictionary to a JSON string before storing in the database.
@@ -129,12 +119,13 @@ class MarketDataRetrieve(MarketDataCreate):
     """
     MarketDataRetrieve is the output data for retrieving a MarketData object from the database.
     """
+
     id: int
     contract: Contract
     market_data: Dict
     upload_timestamp: str
 
-    @validator("contract", pre=True)
+    @field_validator("contract")
     def validate_contract(cls, contract, values):  # noqa:
         """
         Convert contract notation string to Contract object.
@@ -144,7 +135,7 @@ class MarketDataRetrieve(MarketDataCreate):
             return Contract.from_contract_notation(exchange_code, contract)
         return contract
 
-    @validator("market_data", pre=True)
+    @field_validator("market_data")
     def convert_market_data_from_json(cls, market_data: str) -> Dict[str, Any]:
         """
         Convert the market_data JSON string to a dictionary after retrieving from the database.

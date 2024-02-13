@@ -144,6 +144,7 @@ class ContractNotationParser:
     This class provides parsing to a dictionary as well as validation that the
     expected fields are present.
     """
+
     NOTATION_FORMAT = (
         r"(?P<asset>\w+)\s+"
         r"(?P<expiration_month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?P<expiration_year>\d{2})\s+"
@@ -170,8 +171,6 @@ class ContractNotationParser:
         match = re.match(cls.NOTATION_FORMAT, contract_notation)
         cls.validate(contract_notation)
         return match.groupdict()
-
-
 
 
 # Example usage
