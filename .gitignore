@@ -1,0 +1,4 @@
+# python gitignore
+*.pyc
+db-test.sqlite
+db.sqlite

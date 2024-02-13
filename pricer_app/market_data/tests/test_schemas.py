@@ -1,8 +1,11 @@
+import json
+
 import pytest
 from pydantic import ValidationError
 
-from .factories import MarketDataCreateFactory
+from .factories import MarketDataCreateFactory, ContractFactory
 from ..schemas import Contract
+from .helpers import assert_valid_contract
 
 
 @pytest.mark.parametrize(
@@ -12,15 +15,30 @@ from ..schemas import Contract
     ],
 )
 def test_valid_contract(exchange_code, contract_string):
-    Contract.from_contract_notation(exchange_code, contract_string)
+    contract = ContractFactory()
+
+    assert_valid_contract(contract)
 
 
 @pytest.mark.parametrize(
-    "exchange_code,contract_notation,expected_error_message", [
-        ("INVALID", "BRN Jan21 Call Strike 50 USD/BBL", "No exchange found with exchange_code: INVALID"),
-        ("NYMEX", "INVALID CONTRACT STRING", "Invalid contract notation: INVALID CONTRACT STRING"),
-        ("NYMEX", "BRN Jan21 Call Strike 50", "Invalid contract notation: BRN Jan21 Call Strike 50"),
-    ]
+    "exchange_code,contract_notation,expected_error_message",
+    [
+        (
+            "INVALID",
+            "BRN Jan21 Call Strike 50 USD/BBL",
+            "No exchange found with exchange_code: INVALID",
+        ),
+        (
+            "NYMEX",
+            "INVALID CONTRACT STRING",
+            "Invalid contract notation: INVALID CONTRACT STRING",
+        ),
+        (
+            "NYMEX",
+            "BRN Jan21 Call Strike 50",
+            "Invalid contract notation: BRN Jan21 Call Strike 50",
+        ),
+    ],
 )
 def test_invalid_contract(exchange_code, contract_notation, expected_error_message):
     with pytest.raises(ValueError) as ex_info:
@@ -74,7 +92,7 @@ def test_valid_market_data(market_data):
         pricing_model="Black76",
         market_data=market_data,
     )
-    assert market_data_create.market_data == market_data
+    assert json.dumps(market_data) == market_data_create.market_data
 
 
 @pytest.mark.parametrize(

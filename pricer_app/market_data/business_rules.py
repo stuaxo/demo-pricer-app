@@ -96,7 +96,9 @@ class HHExpiryRule(ExpiryRule):
 
 # Exchanges - associate an exchange code with a set of expiry rules
 class Exchange(ABC):
+    # The exchange code, set in the subclass:
     name: str
+    # A dictionary of {asset_code: ExpiryRule} pairs, set in the subclass:
     expiry_rules: Dict[str, Type["ExpiryRule"]]
 
     def get_expiry_rule(self, asset_code: str) -> "ExpiryRule":
@@ -142,6 +144,7 @@ class ContractNotationParser:
     This class provides parsing to a dictionary as well as validation that the
     expected fields are present.
     """
+
     NOTATION_FORMAT = (
         r"(?P<asset>\w+)\s+"
         r"(?P<expiration_month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?P<expiration_year>\d{2})\s+"
@@ -168,17 +171,6 @@ class ContractNotationParser:
         match = re.match(cls.NOTATION_FORMAT, contract_notation)
         cls.validate(contract_notation)
         return match.groupdict()
-
-
-def validate_exchange_code(exchange_code: str) -> bool:
-    """
-    :raise: a ValueError if the exchange_code is not valid implementation of Exchange with a matching exchange_code
-    """
-    if not Exchange.get_exchange(exchange_code):
-        raise ValueError(f"No exchange found with exchange_code: {exchange_code}")
-
-
-validate_contract_notation = ContractNotationParser.validate
 
 
 # Example usage

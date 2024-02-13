@@ -10,6 +10,7 @@ class ContractFactory(factory.Factory):
         model = Contract
 
     # get_valid_exchange_code_for_commodity ensures valid combinations of exchange_code and asset
+    exchange_code = factory.SelfAttribute("original_contract.exchange_code")
     exchange_code = factory.LazyAttribute(
         lambda o: get_valid_exchange_code_for_commodity(o.asset)
     )
@@ -23,7 +24,9 @@ class ContractFactory(factory.Factory):
     option_type = factory.Faker("random_element", elements=["Call", "Put"])
 
     # strike_price is a positive number with 4 digits before decimal, 2 digits after
-    strike_price = factory.Faker("pyfloat", left_digits=4, right_digits=2, positive=True)
+    strike_price = factory.Faker(
+        "pyfloat", left_digits=4, right_digits=2, positive=True
+    )
     unit = factory.Faker("random_element", elements=["USD/BBL", "USD/MMBtu"])
 
 
@@ -32,15 +35,13 @@ class ContractNotationFactory(factory.Factory):
     Generate valid contract notation strings,
     delegates to ContractFactory for the underlying data.
     """
+
     class Meta:
         model = str
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         contract = ContractFactory()
-        # A little hacky, but we stuff the exchange_code into the contract string
-        # so that we can use it in the MarketDataCreateFactory
-        contract = contract._exchange_code = contract.exchange_code
         return contract.to_notation_data()
 
 
@@ -54,9 +55,7 @@ class MarketDataCreateFactory(factory.Factory):
         original_contract = factory.SubFactory(ContractFactory)
 
     # Once contract is created, we can use it to get the exchange_code
-    exchange_code = factory.LazyAttribute(
-        lambda o: o.original_contract.exchange_code  # noqa:
-    )
+    exchange_code = factory.SelfAttribute("original_contract.exchange_code")
 
     # contract is stored in contract notation format, e.g. "BRN Jun21 Call Strike 50.0 USD"
     contract = factory.LazyAttribute(
