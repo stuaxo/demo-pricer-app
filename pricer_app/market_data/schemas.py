@@ -1,6 +1,12 @@
 import json
 from typing import Dict, Union, Optional, Any
-from pydantic import BaseModel, model_validator, field_validator
+from pydantic import (
+    BaseModel,
+    model_validator,
+    field_validator,
+    parse_obj_as,
+    ValidationError,
+)
 
 from .business_rules import ContractNotationParser
 from .validators import validate_exchange_code
@@ -41,6 +47,18 @@ class Contract(BaseModel):
         :return: a string in contract notation format, e.g. "BRN Jun21 Call Strike 50.0 USD"
         """
         return f"{self.asset} {self.expiration_month}{self.expiration_year} {self.option_type} Strike {self.strike_price} {self.unit}"
+
+
+class PricingModel(BaseModel):
+    pass
+
+
+class Black76PricingModel(PricingModel):
+    forward_price: float
+    strike_price: float
+    time_to_expiration: float
+    volatility: float
+    risk_free_interest_rate: float
 
 
 class MarketDataCreate(BaseModel):
@@ -87,6 +105,16 @@ class MarketDataCreate(BaseModel):
             market_data = json.loads(market_data)
 
         if pricing_model == "Black76":
+            try:
+                market_data_validated = parse_obj_as(Black76PricingModel, market_data)
+                values[
+                    "market_data"
+                ] = (
+                    market_data_validated.json()
+                )  # Convert back to JSON string if needed
+            except ValidationError as e:
+                raise ValueError(f"Validation error for Black76 model: {e}")
+
             required_fields = {
                 "forward_price",
                 "strike_price",
@@ -107,7 +135,8 @@ class MarketDataCreate(BaseModel):
     @model_validator(mode="before")
     def convert_market_data_to_json(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Convert the market_data dictionary to a JSON string before storing in the database.
+        Convert the market_data dictionary to a JSON string before storing in the database
+        (sqlite does not have json fields at the time of writing.)
         """
         market_data = values.get("market_data")
         if isinstance(market_data, dict):
@@ -122,7 +151,7 @@ class MarketDataRetrieve(MarketDataCreate):
 
     id: int
     contract: Contract
-    market_data: Dict
+    market_data: PricingModel
     upload_timestamp: str
 
     @field_validator("contract")
@@ -145,4 +174,4 @@ class MarketDataRetrieve(MarketDataCreate):
         return market_data
 
     class Config:
-        orm_mode = True
+        from_attributes = True
