@@ -2,3 +2,7 @@
 *.pyc
 db-test.sqlite
 db.sqlite
+.env
+.envrc
+.idea
+
